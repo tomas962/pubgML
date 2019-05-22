@@ -13,6 +13,7 @@ namespace PUBGStatistics
         {
             string dataFile = "../../Data/statsnocommas.csv";
             List<List<double>> data = ReadDataAsList(dataFile, ';');
+            var normalizedData = NormalizeData(data);
             //WriteData(stats);
             Stat a = new Stat();
             Console.WriteLine();
@@ -65,6 +66,30 @@ namespace PUBGStatistics
                     }
                     lineNr++;
                 }
+            }
+            return data;
+        }
+        static List<List<double>> NormalizeData(List<List<double>> data)
+        {
+            //Find minimum and maximum for each attribute value
+            double[] min = new double[data[0].Count];        
+            double[] max = new double[data[0].Count];
+            for (int i = 0; i < data[0].Count; i++)
+            {
+                for (int j = 0; j < data.Count; j++)
+                {
+                    min[i] = min[i] > data[j][i] ? data[j][i] : min[i]; 
+                    max[i] = max[i] < data[j][i] ? data[j][i] : max[i];
+                }
+            }
+
+            //Normalize values using "Min max normalization"
+            for (int i = 0; i < data.Count; i++)
+            {
+                for (int j = 0; j < data[i].Count; j++)
+                {
+                    data[i][j] = (data[i][j] - min[j]) / (max[j] - min[j]);
+                } 
             }
             return data;
         }
