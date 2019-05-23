@@ -48,7 +48,7 @@ namespace PUBGStatistics
             this.min = min;
             this.max = max;
 
-            this.rnd = new Random();
+            this.rnd = new Random(0);
             this.InitializeWeights(); // all weights and biases
         } // ctor
 

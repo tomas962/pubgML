@@ -19,41 +19,81 @@ namespace PUBGStatistics
         const int dataEndLine = int.MaxValue; //line from which to stop reading from file
         readonly static int[] columnsToIgnore = new int[] { 0, 1, 38, 2, 16 }; //columns to exclude from network (such as kills per game, when training for kills)
         readonly static int[] targetColumns = new int[] { /*6*/ 22 }; //columns to use as targets. 6=Wins; 22=Kills
+        const bool usePca = true;
         //const string dataFile = "../../Data/statsnocommas.csv";
         const string dataFile = "../../Data/stats.csv";
 
 
         static void Main(string[] args)
         {
-            List<List<double>> data = ReadDataAsList(dataFile, ';');
-            var pca = PCA.Compute(data);
-            //read data from file
-            (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', columnsToIgnore, targetColumns, dataStartLine, dataEndLine);
-
-            //normalize all data values (scale between 0 and 1)
-            (double[][] normalizedData, _, _) = NormalizeData(dataArray);
-            (double[][] normalizedTargets, double[] min, double[] max) = NormalizeData(targetArray);
-
-            //split data into two sets - training and testing = 80% and 20%
-            (double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(normalizedData, normalizedTargets, dataSplitPercentage);
-            //(double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(dataArray, targetArray, 0.8);
-
-            //create network
-            var nn = new BPNeuralNetwork(dataArray[0].Length, hiddenNeuronCount, outputNeuronCount, min, max);
-
-            //train network
-            nn.Train(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum);
-
-            //string[] propertyNames = ReadPropertyNames("../../Data/property_names.csv", ',');
-            //for (int i = 0; i < propertyNames.Length; i++)
-            //    Console.WriteLine(i + " | " + propertyNames[i]);
-
-            //Test the network
-            for (int i = 0; i < testDataArray.Length; i++)
+            if (usePca)
             {
-                nn.ComputeOutputs(testDataArray[i], testTargetArray[i]);
+                List<List<double>> data = ReadDataAsList(dataFile, ';');
+                var pca = PCA.Compute(data);
+                //read data from file
+                (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', columnsToIgnore, targetColumns, dataStartLine, dataEndLine);
+                double[][] pcaData = List2DToArray2D(pca);
+                //normalize all data values (scale between 0 and 1)
+                (double[][] normalizedPcaData, _, _) = NormalizeData(pcaData);
+                (double[][] normalizedTargets, double[] min, double[] max) = NormalizeData(targetArray);
+
+                //split data into two sets - training and testing = 80% and 20%
+                (double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(normalizedPcaData, normalizedTargets, dataSplitPercentage);
+
+                //create network
+                var nn = new BPNeuralNetwork(normalizedPcaData[0].Length, hiddenNeuronCount, outputNeuronCount, min, max);
+
+                //train network
+                nn.Train(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum);
+
+                //string[] propertyNames = ReadPropertyNames("../../Data/property_names.csv", ',');
+                //for (int i = 0; i < propertyNames.Length; i++)
+                //    Console.WriteLine(i + " | " + propertyNames[i]);
+
+                //Test the network
+                for (int i = 0; i < testDataArray.Length; i++)
+                {
+                    nn.ComputeOutputs(testDataArray[i], testTargetArray[i]);
+                }
+                Console.ReadLine();
             }
-            Console.ReadLine();
+            else
+            {
+                //read data from file
+                (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', columnsToIgnore, targetColumns, dataStartLine, dataEndLine);
+                //normalize all data values (scale between 0 and 1)
+                (double[][] normalizedData, _, _) = NormalizeData(dataArray);
+                (double[][] normalizedTargets, double[] min, double[] max) = NormalizeData(targetArray);
+
+                //split data into two sets - training and testing = 80% and 20%
+                (double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(normalizedData, normalizedTargets, dataSplitPercentage);
+                //(double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(dataArray, targetArray, 0.8);
+
+                //create network
+                var nn = new BPNeuralNetwork(dataArray[0].Length, hiddenNeuronCount, outputNeuronCount, min, max);
+
+                //train network
+                nn.Train(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum);
+
+                //string[] propertyNames = ReadPropertyNames("../../Data/property_names.csv", ',');
+                //for (int i = 0; i < propertyNames.Length; i++)
+                //    Console.WriteLine(i + " | " + propertyNames[i]);
+
+                //Test the network
+                for (int i = 0; i < testDataArray.Length; i++)
+                {
+                    nn.ComputeOutputs(testDataArray[i], testTargetArray[i]);
+                }
+                Console.ReadLine();
+            }
+            
+        }
+
+        static T[][] List2DToArray2D<T>(List<List<T>> list)
+        {
+            var lists = list.Select(sublist => sublist.ToArray());
+            T[][] array = lists.ToArray();
+            return array;
         }
 
         static string[] ReadPropertyNames(string fileName, char separator)
