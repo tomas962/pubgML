@@ -19,14 +19,19 @@ namespace PUBGStatistics
             var mean = GetMean(data);
             var shiftedValue = ShiftValue(data, mean);
             var covariance = GetCovarianceMatrix(shiftedValue, mean);
-            var eigenV = GetEigen(covariance);
+            var eigenV = GetEigen(covariance, N);
 
-            var newData = new List<List<double>>();
-            for (int i = 0; i < N; i++)
+            var oldData = ConvToMatrix(data);
+
+            var newData = oldData * eigenV;
+
+            var newDataList = new List<List<double>>();
+
+            for (int i = 0; i < data.Count; i++)
             {
-                newData.Add(eigenV.Column(i).ToArray().ToList());
+                newDataList.Add(newData.Row(i).ToList());
             }
-            return newData;
+            return newDataList;
         }
         static List<double> GetMean(List<List<double>> matrix)
         {
@@ -77,14 +82,14 @@ namespace PUBGStatistics
             }
             return DenseMatrix.OfArray(array);
         }
-        static Matrix<double> GetEigen(List<List<double>> covariance)
+        static Matrix<double> GetEigen(List<List<double>> covariance, int N)
         {
             Matrix<double> matrix = ConvToMatrix(covariance);
             Evd<double> eigen = matrix.Evd();
             //Vector<Complex> eigenValues = eigen.EigenValues;
             Matrix<double> eigenVectors = eigen.EigenVectors;
 
-            return eigenVectors;
+            return eigenVectors.SubMatrix(0,eigenVectors.RowCount,0,N);
         }
     }
 }
