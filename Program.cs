@@ -19,10 +19,14 @@ namespace PUBGStatistics
         const int dataEndLine = int.MaxValue; //line from which to stop reading from file
         readonly static int[] columnsToIgnore = new int[] { 0, 1, 38, 2, 16 }; //columns to exclude from network (such as kills per game, when training for kills)
         readonly static int[] targetColumns = new int[] { /*6*/ 22 }; //columns to use as targets. 6=Wins; 22=Kills
-        const string dataFile = "../../Data/statsnocommas.csv";
+        //const string dataFile = "../../Data/statsnocommas.csv";
+        const string dataFile = "../../Data/stats.csv";
+
 
         static void Main(string[] args)
         {
+            List<List<double>> data = ReadDataAsList(dataFile, ';');
+            var pca = PCA.Compute(data);
             //read data from file
             (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', columnsToIgnore, targetColumns, dataStartLine, dataEndLine);
 
