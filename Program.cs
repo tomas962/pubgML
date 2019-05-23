@@ -17,10 +17,13 @@ namespace PUBGStatistics
         const double learningMomentum = 1;
         const int dataStartLine = 0; //line from which to start reading data from file
         const int dataEndLine = int.MaxValue; //line from which to stop reading from file
-        const string dataFile = "../../Data/statsnocommas.csv";
+        //const string dataFile = "../../Data/statsnocommas.csv";
+        const string dataFile = "../../Data/stats.csv";
 
         static void Main(string[] args)
         {
+            List<List<double>> data = ReadDataAsList(dataFile, ';');
+            var pca = PCA.Compute(data);
             //read data from file
             (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', new int[] { 0, 1, 38 }, new int[]{ 6}, dataStartLine, dataEndLine);
 
