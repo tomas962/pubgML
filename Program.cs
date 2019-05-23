@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+//using System.Threading.Tasks;
 
 namespace PUBGStatistics
 {
@@ -12,12 +12,40 @@ namespace PUBGStatistics
         static void Main(string[] args)
         {
             string dataFile = "../../Data/statsnocommas.csv";
-            List<List<double>> data = ReadDataAsList(dataFile, ';');
-            var normalizedData = NormalizeData(data);
-            //WriteData(stats);
-            Stat a = new Stat();
-            Console.WriteLine();
-            Console.ReadKey();        
+
+            //read data from file
+            (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', new int[] { 0, 1, 38 }, new int[]{ 6}, 1000, 2000-1);
+
+            //normalize all data values (scale between 0 and 1)
+            double[][] normalizedData = NormalizeData(dataArray);
+            double[][] normalizedTargets = NormalizeData(targetArray);
+
+            //split data into two sets - training and testing = 80% and 20%
+            (double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(normalizedData, normalizedTargets, 0.8);
+            //(double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(dataArray, targetArray, 0.8);
+
+            //create network
+            var nn = new BPNeuralNetwork(dataArray[0].Length, 10, 1);
+
+            //train network
+            nn.Train(trainDataArray, trainTargetArray, 1000, 0.1, 1);
+
+            string[] propertyNames = ReadPropertyNames("../../Data/property_names.csv", ',');
+            for (int i = 0; i < propertyNames.Length; i++)
+                Console.WriteLine(i + " | " + propertyNames[i]);
+
+            for (int i = 0; i < testDataArray.Length; i++)
+            {
+                nn.ComputeOutputs(testDataArray[i], testTargetArray[i]);
+            }
+            Console.ReadLine();
+        }
+
+        static string[] ReadPropertyNames(string fileName, char separator)
+        {
+            string[] lines = File.ReadAllLines(fileName);
+            string[] names = lines[0].Split(separator);
+            return names;
         }
 
         static List<Stat> ReadDataAsObjects(string fileName)
@@ -57,7 +85,7 @@ namespace PUBGStatistics
                 while ((line = reader.ReadLine()) != null)
                 {
                     data.Add(new List<double>());
-                    
+
                     values = line.Split(separator);
                     //Skip first value, because it is string (player name)
                     for (int i = 1; i < values.Length; i++)
@@ -69,8 +97,86 @@ namespace PUBGStatistics
             }
             return data;
         }
-        static List<List<double>> NormalizeData(List<List<double>> data)
+        static (double[][] dataArray, double[][] targetArray) ReadDataAsArray(string fileName, char separator, int[] columnsToSkip, int[] targetColumns, int startLine = 0, int endLine = int.MaxValue, double split = 1)
         {
+
+            List<List<double>> data = new List<List<double>>();
+            List<List<double>> targets = new List<List<double>>();
+            using (StreamReader reader = new StreamReader(fileName))
+            {
+                string line;
+                string[] values;
+                int lineNr = 0;
+                int idx = 0;
+
+                while ((line = reader.ReadLine()) != null)
+                {
+                    //start reading from startLine
+                    if (lineNr < startLine)
+                    {
+                        lineNr++;
+                        continue;
+                    }
+
+                    //end reading on endLine
+                    if (lineNr > endLine)
+                        break;
+
+                    data.Add(new List<double>());
+                    targets.Add(new List<double>());
+
+                    values = line.Split(separator);
+
+                    for (int i = 0; i < values.Length; i++)
+                    {
+                        //check if column should be skipped
+                        if (columnsToSkip.Contains(i))
+                            continue;
+
+                        //check if column is target column = add to target array
+                        if (targetColumns.Contains(i))
+                            targets[idx].Add(double.Parse(values[i]));
+
+                        //if not target, add to data array
+                        else
+                            data[idx].Add(double.Parse(values[i]));
+                    }
+                    idx++;
+                    lineNr++;
+                }
+            }
+
+            var dataRows = data.Select(row => row.ToArray());
+            var targetRows = targets.Select(row => row.ToArray());
+
+            double[][] dataArray = dataRows.ToArray();
+            double[][] targetsArray = targetRows.ToArray();
+
+            return (dataArray, targetsArray);
+        }
+
+        static (double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetsArray) SplitData(double[][] dataArray, double[][] targetArray, double split)
+        {
+            var dataRows = dataArray.Select(row => row.ToArray());
+            var trainDataRows = dataRows.Take((int)(dataRows.Count() * split));
+            var targetRows = targetArray.Select(row => row.ToArray());
+            var trainTargetRows = targetRows.Take((int)(targetRows.Count() * split));
+            var testDataRows = dataRows.Skip((int)(dataRows.Count() * split));
+            var testTargetRows = targetRows.Skip((int)(targetRows.Count() * split));
+
+            double[][] trainDataArray = trainDataRows.ToArray();
+            double[][] trainTargetsArray = trainTargetRows.ToArray();
+
+            double[][] testDataArray = testDataRows.ToArray();
+            double[][] testTargetsArray = testTargetRows.ToArray();
+
+            return (trainDataArray, trainTargetsArray, testDataArray, testTargetsArray);
+        }
+
+        static List<List<double>> NormalizeData(List<List<double>> inputData)
+        {
+            
+            var data = new List<List<double>>(inputData);
             //Find minimum and maximum for each attribute value
             double[] min = new double[data[0].Count];        
             double[] max = new double[data[0].Count];
@@ -94,6 +200,32 @@ namespace PUBGStatistics
             return data;
         }
 
+        static double[][] NormalizeData(double[][] inputData)
+        {
+
+            var data = inputData;
+            //Find minimum and maximum for each attribute value
+            double[] min = new double[data[0].Length];
+            double[] max = new double[data[0].Length];
+            for (int i = 0; i < data[0].Length; i++)
+            {
+                for (int j = 0; j < data.Length; j++)
+                {
+                    min[i] = min[i] > data[j][i] ? data[j][i] : min[i];
+                    max[i] = max[i] < data[j][i] ? data[j][i] : max[i];
+                }
+            }
+
+            //Normalize values using "Min max normalization"
+            for (int i = 0; i < data.Length; i++)
+            {
+                for (int j = 0; j < data[i].Length; j++)
+                {
+                    data[i][j] = (data[i][j] - min[j]) / (max[j] - min[j]);
+                }
+            }
+            return data;
+        }
         static void WriteData(List<Stat> stats)
         {
             foreach (var stat in stats)
@@ -101,6 +233,8 @@ namespace PUBGStatistics
                 Console.WriteLine(stat);
             }
         }
+
+
 
     }
 }
