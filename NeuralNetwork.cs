@@ -167,7 +167,7 @@ namespace PUBGStatistics
 
             if(targets != null)//max=63
             {
-                Console.WriteLine("Result value:\n" + (retResult[0] * (this.max[0] - this.min[0]) + this.min[0]) + "\nTarget value:\n" + (targets[0] * (this.max[0] - this.min[0]) + this.min[0]) + "\n");
+                Console.WriteLine("Result value:\n" + (int)(retResult[0] * (this.max[0] - this.min[0]) + this.min[0]) + "\nTarget value:\n" + (targets[0] * (this.max[0] - this.min[0]) + this.min[0]) + "\n");
             }
 
             return retResult;

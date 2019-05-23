@@ -17,12 +17,14 @@ namespace PUBGStatistics
         const double learningMomentum = 1;
         const int dataStartLine = 0; //line from which to start reading data from file
         const int dataEndLine = int.MaxValue; //line from which to stop reading from file
+        readonly static int[] columnsToIgnore = new int[] { 0, 1, 38, 2, 16 }; //columns to exclude from network (such as kills per game, when training for kills)
+        readonly static int[] targetColumns = new int[] { /*6*/ 22 }; //columns to use as targets. 6=Wins; 22=Kills
         const string dataFile = "../../Data/statsnocommas.csv";
 
         static void Main(string[] args)
         {
             //read data from file
-            (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', new int[] { 0, 1, 38 }, new int[]{ 6}, dataStartLine, dataEndLine);
+            (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', columnsToIgnore, targetColumns, dataStartLine, dataEndLine);
 
             //normalize all data values (scale between 0 and 1)
             (double[][] normalizedData, _, _) = NormalizeData(dataArray);
@@ -38,9 +40,9 @@ namespace PUBGStatistics
             //train network
             nn.Train(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum);
 
-            string[] propertyNames = ReadPropertyNames("../../Data/property_names.csv", ',');
-            for (int i = 0; i < propertyNames.Length; i++)
-                Console.WriteLine(i + " | " + propertyNames[i]);
+            //string[] propertyNames = ReadPropertyNames("../../Data/property_names.csv", ',');
+            //for (int i = 0; i < propertyNames.Length; i++)
+            //    Console.WriteLine(i + " | " + propertyNames[i]);
 
             //Test the network
             for (int i = 0; i < testDataArray.Length; i++)
