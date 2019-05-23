@@ -12,26 +12,28 @@ namespace PUBGStatistics
         const double dataSplitPercentage = 0.8; //percentage of training data - remaining data is testing data
         const int hiddenNeuronCount = 10;
         const int outputNeuronCount = 1;
-        const int trainingEpochCount = 1000;
+        const int trainingEpochCount = 100;
         const double learningRate = 0.1;
         const double learningMomentum = 1;
+        const int dataStartLine = 0; //line from which to start reading data from file
+        const int dataEndLine = int.MaxValue; //line from which to stop reading from file
         const string dataFile = "../../Data/statsnocommas.csv";
 
         static void Main(string[] args)
         {
             //read data from file
-            (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', new int[] { 0, 1, 38 }, new int[]{ 6}, 1000, 2000-1);
+            (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', new int[] { 0, 1, 38 }, new int[]{ 6}, dataStartLine, dataEndLine);
 
             //normalize all data values (scale between 0 and 1)
-            double[][] normalizedData = NormalizeData(dataArray);
-            double[][] normalizedTargets = NormalizeData(targetArray);
+            (double[][] normalizedData, _, _) = NormalizeData(dataArray);
+            (double[][] normalizedTargets, double[] min, double[] max) = NormalizeData(targetArray);
 
             //split data into two sets - training and testing = 80% and 20%
             (double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(normalizedData, normalizedTargets, dataSplitPercentage);
             //(double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(dataArray, targetArray, 0.8);
 
             //create network
-            var nn = new BPNeuralNetwork(dataArray[0].Length, hiddenNeuronCount, outputNeuronCount);
+            var nn = new BPNeuralNetwork(dataArray[0].Length, hiddenNeuronCount, outputNeuronCount, min, max);
 
             //train network
             nn.Train(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum);
@@ -207,7 +209,7 @@ namespace PUBGStatistics
             return data;
         }
 
-        static double[][] NormalizeData(double[][] inputData)
+        static (double[][], double[] min, double[] max) NormalizeData(double[][] inputData)
         {
 
             var data = inputData;
@@ -231,7 +233,7 @@ namespace PUBGStatistics
                     data[i][j] = (data[i][j] - min[j]) / (max[j] - min[j]);
                 }
             }
-            return data;
+            return (data, min, max);
         }
         static void WriteData(List<Stat> stats)
         {

@@ -24,9 +24,12 @@ namespace PUBGStatistics
         private double[] oBiases;
         private double[] outputs;
 
+        private double[] min; //target min and max values use for output denormalization
+        private double[] max; 
+
         private Random rnd;
 
-        public BPNeuralNetwork(int numInput, int numHidden, int numOutput)
+        public BPNeuralNetwork(int numInput, int numHidden, int numOutput, double[] min, double[] max)
         {
             this.numInput = numInput;
             this.numHidden = numHidden;
@@ -41,6 +44,9 @@ namespace PUBGStatistics
             this.hoWeights = MakeMatrix(numHidden, numOutput, 0.0);
             this.oBiases = new double[numOutput];
             this.outputs = new double[numOutput];
+
+            this.min = min;
+            this.max = max;
 
             this.rnd = new Random();
             this.InitializeWeights(); // all weights and biases
@@ -161,7 +167,7 @@ namespace PUBGStatistics
 
             if(targets != null)//max=63
             {
-                Console.WriteLine("Result value:\n" + (retResult[0] * (63)) + "\nTarget value:\n" + targets[0] * 63 + "\n");
+                Console.WriteLine("Result value:\n" + (retResult[0] * (this.max[0] - this.min[0]) + this.min[0]) + "\nTarget value:\n" + (targets[0] * (this.max[0] - this.min[0]) + this.min[0]) + "\n");
             }
 
             return retResult;
@@ -235,11 +241,11 @@ namespace PUBGStatistics
             {
                 ++epoch;
 
-                //if (epoch % errInterval == 0 && epoch < maxEpochs)
+                if (epoch % errInterval == 0 && epoch < maxEpochs)
                 {
                     double trainErr = Error(trainData, targets);
                     Console.WriteLine("epoch = " + epoch + "  error = " +
-                      trainErr.ToString("F4"));
+                      trainErr);
                     //Console.ReadLine();
                 }
 
