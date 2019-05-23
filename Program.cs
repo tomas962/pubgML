@@ -9,10 +9,16 @@ namespace PUBGStatistics
 {
     class Program
     {
+        const double dataSplitPercentage = 0.8; //percentage of training data - remaining data is testing data
+        const int hiddenNeuronCount = 10;
+        const int outputNeuronCount = 1;
+        const int trainingEpochCount = 1000;
+        const double learningRate = 0.1;
+        const double learningMomentum = 1;
+        const string dataFile = "../../Data/statsnocommas.csv";
+
         static void Main(string[] args)
         {
-            string dataFile = "../../Data/statsnocommas.csv";
-
             //read data from file
             (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', new int[] { 0, 1, 38 }, new int[]{ 6}, 1000, 2000-1);
 
@@ -21,19 +27,20 @@ namespace PUBGStatistics
             double[][] normalizedTargets = NormalizeData(targetArray);
 
             //split data into two sets - training and testing = 80% and 20%
-            (double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(normalizedData, normalizedTargets, 0.8);
+            (double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(normalizedData, normalizedTargets, dataSplitPercentage);
             //(double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(dataArray, targetArray, 0.8);
 
             //create network
-            var nn = new BPNeuralNetwork(dataArray[0].Length, 10, 1);
+            var nn = new BPNeuralNetwork(dataArray[0].Length, hiddenNeuronCount, outputNeuronCount);
 
             //train network
-            nn.Train(trainDataArray, trainTargetArray, 1000, 0.1, 1);
+            nn.Train(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum);
 
             string[] propertyNames = ReadPropertyNames("../../Data/property_names.csv", ',');
             for (int i = 0; i < propertyNames.Length; i++)
                 Console.WriteLine(i + " | " + propertyNames[i]);
 
+            //Test the network
             for (int i = 0; i < testDataArray.Length; i++)
             {
                 nn.ComputeOutputs(testDataArray[i], testTargetArray[i]);
