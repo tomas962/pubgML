@@ -20,8 +20,8 @@ namespace PUBGStatistics
         readonly static int[] columnsToIgnore = new int[] { 0, 1, 38, 2, 16 }; //columns to exclude from network (such as kills per game, when training for kills)
         readonly static int[] targetColumns = new int[] { /*6*/ 22 }; //columns to use as targets. 6=Wins; 22=Kills
         const bool usePca = true;
-        //const string dataFile = "../../Data/statsnocommas.csv";
-        const string dataFile = "../../Data/stats.csv";
+        const string dataFile = "../../Data/statsnocommas.csv";
+        //const string dataFile = "../../Data/stats.csv";
 
 
         static void Main(string[] args)
@@ -29,10 +29,9 @@ namespace PUBGStatistics
             if (usePca)
             {
                 List<List<double>> data = ReadDataAsList(dataFile, ';');
+                //KNN(data);
 
-                var test = FilterOutColumns(data, new List<int>() { 1, 2 });
-
-                var pca = PCA.Compute(data);
+                var pca = PCA.Compute(data, 5);
                 //read data from file
                 (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', columnsToIgnore, targetColumns, dataStartLine, dataEndLine);
                 double[][] pcaData = List2DToArray2D(pca);
@@ -89,7 +88,26 @@ namespace PUBGStatistics
                 }
                 Console.ReadLine();
             }
+
+        }
+        static void KNN(List<List<double>> data)
+        {
+            var normalized = NormalizeData(data);
+            var pca = PCA.Compute(normalized, 2);
             
+            (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', columnsToIgnore, targetColumns, dataStartLine, dataEndLine);
+            double[][] normalizedPcaData = List2DToArray2D(pca);
+            (double[][] normalizedTargets, double[] min, double[] max) = NormalizeData(targetArray);
+            
+            (double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(normalizedPcaData, normalizedTargets, dataSplitPercentage);
+            
+            int K = 131;
+            for (int i = 0; i < testDataArray.Length; i++)
+            {
+                int classIdx = KNearestNeighbor.Classify(testDataArray[i], trainDataArray, trainTargetArray, K, min[0], max[0]);
+                Console.WriteLine("Classified: {0}", classIdx==1?"0-50": classIdx == 2 ? "50-150" : ">150");
+                Console.WriteLine("Actual: {0}\n", testTargetArray[i][0] * (max[0] - min[0]) + min[0]);
+            }
         }
 
         static T[][] List2DToArray2D<T>(List<List<T>> list)

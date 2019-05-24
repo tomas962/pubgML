@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="KNearestNeighbour.cs" />
     <Compile Include="NeuralNetwork.cs" />
     <Compile Include="PCA.cs" />
     <Compile Include="Program.cs" />

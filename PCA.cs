@@ -8,14 +8,15 @@ using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra.Double;
 using MathNet.Numerics.Statistics;
 using MathNet.Numerics.LinearAlgebra.Factorization;
+using System.Numerics;
 
 namespace PUBGStatistics
 {
     class PCA
     {
-        static public List<List<double>> Compute(List<List<double>> data)
+        static public List<List<double>> Compute(List<List<double>> data, int N)
         {
-            int N = 5; //components to take
+            //int N = 5; //components to take
             var mean = GetMean(data);
             var shiftedValue = ShiftValue(data, mean);
             var covariance = GetCovarianceMatrix(shiftedValue, mean);
