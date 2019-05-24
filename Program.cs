@@ -29,6 +29,9 @@ namespace PUBGStatistics
             if (usePca)
             {
                 List<List<double>> data = ReadDataAsList(dataFile, ';');
+
+                var test = FilterOutColumns(data, new List<int>() { 1, 2 });
+
                 var pca = PCA.Compute(data);
                 //read data from file
                 (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', columnsToIgnore, targetColumns, dataStartLine, dataEndLine);
@@ -288,8 +291,18 @@ namespace PUBGStatistics
                 Console.WriteLine(stat);
             }
         }
-
-
-
+        static List<List<double>> FilterOutColumns(List<List<double>> data, List<int> columnIdx)
+        {
+            
+            List<List<double>> filteredData = data.Select(s => s.ToList()).ToList();
+            foreach (var row in filteredData)
+            {
+                foreach (var idx in columnIdx)
+                {
+                    row.RemoveAt(idx);
+                }
+            }
+            return filteredData;
+        }
     }
 }
