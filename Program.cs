@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Windows.Forms;
 //using System.Threading.Tasks;
 
 namespace PUBGStatistics
@@ -20,16 +21,21 @@ namespace PUBGStatistics
         readonly static int[] columnsToIgnore = new int[] { 0, 1, 38, 2, 16 }; //columns to exclude from network (such as kills per game, when training for kills)
         readonly static int[] targetColumns = new int[] { /*6*/ 22 }; //columns to use as targets. 6=Wins; 22=Kills
         const bool usePca = true;
-        const string dataFile = "../../Data/statsnocommas.csv";
-        //const string dataFile = "../../Data/stats.csv";
+        //const string dataFile = "../../Data/statsnocommas.csv";
+        const string dataFile = "../../Data/stats.csv";
 
 
+        [STAThread]
         static void Main(string[] args)
         {
             if (usePca)
             {
+                //Application.EnableVisualStyles();
+                //Application.Run(new Diagrams());
+                
+
                 List<List<double>> data = ReadDataAsList(dataFile, ';');
-                //KNN(data);
+                KNN(data);
 
                 var pca = PCA.Compute(data, 5);
                 //read data from file
@@ -90,24 +96,32 @@ namespace PUBGStatistics
             }
 
         }
+        [STAThread]
         static void KNN(List<List<double>> data)
         {
+            Console.WriteLine("-------------------------------------");
+            Console.WriteLine("K-Nearest Neighbour method");
+            Console.WriteLine("-------------------------------------\n");
             var normalized = NormalizeData(data);
             var pca = PCA.Compute(normalized, 2);
-            
+
             (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', columnsToIgnore, targetColumns, dataStartLine, dataEndLine);
             double[][] normalizedPcaData = List2DToArray2D(pca);
             (double[][] normalizedTargets, double[] min, double[] max) = NormalizeData(targetArray);
             
             (double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(normalizedPcaData, normalizedTargets, dataSplitPercentage);
-            
+
+            Application.EnableVisualStyles();
+            Application.Run(new Diagrams(trainDataArray, trainTargetArray, min[0], max[0]));
+
             int K = 131;
-            for (int i = 0; i < testDataArray.Length; i++)
+            for (int i = 0; i < 50; i++)//testDataArray.Length
             {
                 int classIdx = KNearestNeighbor.Classify(testDataArray[i], trainDataArray, trainTargetArray, K, min[0], max[0]);
                 Console.WriteLine("Classified: {0}", classIdx==1?"0-50": classIdx == 2 ? "50-150" : ">150");
                 Console.WriteLine("Actual: {0}\n", testTargetArray[i][0] * (max[0] - min[0]) + min[0]);
             }
+            Console.WriteLine("-------------------------------------\n");
         }
 
         static T[][] List2DToArray2D<T>(List<List<T>> list)
