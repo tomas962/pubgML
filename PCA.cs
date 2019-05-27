@@ -20,6 +20,7 @@ namespace PUBGStatistics
             var mean = GetMean(data);
             var shiftedValue = ShiftValue(data, mean);
             var covariance = GetCovarianceMatrix(shiftedValue, mean);
+            //PrintCov(covariance);
             var eigenV = GetEigen(covariance, N);
 
             var oldData = ConvToMatrix(data);
@@ -33,6 +34,34 @@ namespace PUBGStatistics
                 newDataList.Add(newData.Row(i).ToList());
             }
             return newDataList;
+        }
+        static void PrintCov(List<List<double>> cov)
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                for (int j = 0; j < 10; j++)
+                {
+                    Console.Write(" {0, 5:f2} ", cov[i][j]);
+                }
+                Console.Write("...");
+                Console.WriteLine();
+            }
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 10; j++)
+                {
+                    Console.Write(" {0, 5} ", ".");
+                }
+                Console.WriteLine();
+            }
+            //foreach (var row in cov)
+            //{
+            //    foreach (var item in row)
+            //    {
+            //        Console.Write(" {0, 5:f2} ", item);
+            //    }
+            //    Console.WriteLine();
+            //}
         }
         static List<double> GetMean(List<List<double>> matrix)
         {
@@ -88,6 +117,7 @@ namespace PUBGStatistics
             Matrix<double> matrix = ConvToMatrix(covariance);
             Evd<double> eigen = matrix.Evd();
             //Vector<Complex> eigenValues = eigen.EigenValues;
+            //Console.WriteLine(eigenValues.ToString());
             Matrix<double> eigenVectors = eigen.EigenVectors;
 
             return eigenVectors.SubMatrix(0,eigenVectors.RowCount,0,N);

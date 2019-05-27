@@ -47,7 +47,7 @@ namespace PUBGStatistics
 
                 //split data into two sets - training and testing = 80% and 20%
                 (double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(normalizedPcaData, normalizedTargets, dataSplitPercentage);
-
+                
                 //create network
                 var nn = new BPNeuralNetwork(normalizedPcaData[0].Length, hiddenNeuronCount, outputNeuronCount, min, max);
 
