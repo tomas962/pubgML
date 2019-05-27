@@ -35,7 +35,7 @@ namespace PUBGStatistics
                 
 
                 List<List<double>> data = ReadDataAsList(dataFile, ';');
-                //KNN(data);
+                KNN(data);
 
                 var pca = PCA.Compute(data, 5);
                 //read data from file
@@ -47,9 +47,10 @@ namespace PUBGStatistics
 
                 //split data into two sets - training and testing = 80% and 20%
                 (double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(normalizedPcaData, normalizedTargets, dataSplitPercentage);
-                
+
                 //create network
                 var nn = new BPNeuralNetwork(normalizedPcaData[0].Length, hiddenNeuronCount, outputNeuronCount, min, max);
+                //var nn = new BPNeuralNetwork(normalizedPcaData[0].Length, hiddenNeuronCount, outputNeuronCount, min, max);
 
                 //nn.CrossValidation(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum, nn);
                 //train network
@@ -113,16 +114,54 @@ namespace PUBGStatistics
             //(var data1, var data2) = CrossValidationSplitData(normalizedPcaData, normalizedTargets, 10);
             (double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(normalizedPcaData, normalizedTargets, dataSplitPercentage);
 
-            Application.EnableVisualStyles();
-            Application.Run(new Diagrams(trainDataArray, trainTargetArray, min[0], max[0]));
+            //Application.EnableVisualStyles();
+            //Application.Run(new Diagrams(trainDataArray, trainTargetArray, min[0], max[0]));
 
             int K = 131;
-            for (int i = 0; i < 50; i++)//testDataArray.Length
+            int N = 50;
+            int correct = 0;
+            int wrong = 0;
+            for (int i = 0; i < N; i++)//testDataArray.Length
             {
                 int classIdx = KNearestNeighbor.Classify(testDataArray[i], trainDataArray, trainTargetArray, K, min[0], max[0]);
                 Console.WriteLine("Classified: {0}", classIdx==1?"0-50": classIdx == 2 ? "50-150" : ">150");
-                Console.WriteLine("Actual: {0}\n", testTargetArray[i][0] * (max[0] - min[0]) + min[0]);
+                var actual = testTargetArray[i][0] * (max[0] - min[0]) + min[0];
+                Console.WriteLine("Actual: {0}\n", actual);
+                if (classIdx == 1)
+                {
+                    if (actual < 50)
+                    {
+                        correct++;
+                    }
+                    else
+                    {
+                        wrong++;
+                    }
+                }
+                else if(classIdx == 2)
+                {
+                    if (actual > 150)
+                    {
+                        correct++;
+                    }
+                    else
+                    {
+                        wrong++;
+                    }
+                }
+                else
+                {
+                    if (actual > 50 && actual < 150)
+                    {
+                        correct++;
+                    }
+                    else
+                    {
+                        wrong++;
+                    }
+                }
             }
+            Console.WriteLine("Accuracy: {0} %", (double)correct / N * 100 );
             Console.WriteLine("-------------------------------------\n");
         }
 

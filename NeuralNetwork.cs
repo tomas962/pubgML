@@ -257,7 +257,7 @@ namespace PUBGStatistics
             int validationCount = 10;
             (var data, var target) = CrossValidationSplitData(trainDataArray, targets, validationCount);
 
-
+            List<double> errors = new List<double>();
             int errInterval = maxEpochs / 10; // interval to check error
             while (epoch < maxEpochs)
             {
@@ -270,6 +270,7 @@ namespace PUBGStatistics
                     double trainErr = Error(trainData, targetData);
                     Console.WriteLine("epoch = " + epoch + "  error = " +
                       trainErr);
+                    errors.Add(trainErr);
                     //Console.ReadLine();
                 }
 
@@ -370,6 +371,7 @@ namespace PUBGStatistics
                 } // each training item
 
             } // while
+            Console.WriteLine("Average error: {0}", errors.Average());
             double[] bestWts = GetWeights();
             return bestWts;
         } // Train
