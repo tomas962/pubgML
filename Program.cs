@@ -51,19 +51,19 @@ namespace PUBGStatistics
                 //create network
                 var nn = new BPNeuralNetwork(normalizedPcaData[0].Length, hiddenNeuronCount, outputNeuronCount, min, max);
 
-                nn.CrossValidation(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum, nn);
+                //nn.CrossValidation(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum, nn);
                 //train network
-                //nn.Train(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum);
+                nn.Train(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum);
 
                 //string[] propertyNames = ReadPropertyNames("../../Data/property_names.csv", ',');
                 //for (int i = 0; i < propertyNames.Length; i++)
                 //    Console.WriteLine(i + " | " + propertyNames[i]);
 
                 //Test the network
-                //for (int i = 0; i < testDataArray.Length; i++)
-                //{
-                //    nn.ComputeOutputs(testDataArray[i], testTargetArray[i]);
-                //}
+                for (int i = 0; i < testDataArray.Length; i++)
+                {
+                    nn.ComputeOutputs(testDataArray[i], testTargetArray[i]);
+                }
                 Console.ReadLine();
             }
             else

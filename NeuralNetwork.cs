@@ -205,26 +205,26 @@ namespace PUBGStatistics
 
             return result; // now scaled so that xi sum to 1.0
         }
-        public void CrossValidation(double[][] trainDataArray, double[][] targets, int maxEpochs, double learnRate, double momentum, BPNeuralNetwork nn)
-        {
-            int validationCount = 10;
-            (var data, var target) = CrossValidationSplitData(trainDataArray, targets, validationCount);
-            for (int i = 0; i < validationCount; i++)
-            {
-                Console.WriteLine("Cross Validation Train - {0}", i);
-                var trainData = data.Select((s, k) => new { s, k }).Where(w => w.k != i).SelectMany(s => s.s).ToArray();
-                var targetData = target.Select((s, k) => new { s, k }).Where(w => w.k != i).SelectMany(s => s.s).ToArray();
-                Train(trainData, targetData, maxEpochs, learnRate, momentum);
+        //public void CrossValidationLievas(double[][] trainDataArray, double[][] targets, int maxEpochs, double learnRate, double momentum, BPNeuralNetwork nn)
+        //{
+        //    int validationCount = 10;
+        //    (var data, var target) = CrossValidationSplitData(trainDataArray, targets, validationCount);
+        //    for (int i = 0; i < validationCount; i++)
+        //    {
+        //        Console.WriteLine("Cross Validation Train - {0}", i);
+        //        var trainData = data.Select((s, k) => new { s, k }).Where(w => w.k != i).SelectMany(s => s.s).ToArray();
+        //        var targetData = target.Select((s, k) => new { s, k }).Where(w => w.k != i).SelectMany(s => s.s).ToArray();
+        //        Train(trainData, targetData, maxEpochs, learnRate, momentum);
 
-                Console.WriteLine("Cross Validation Test - {0}", i);
-                for (int k = 0; k < data[i].Length; k++)
-                {
-                    nn.ComputeOutputs(data[i][k], target[i][k]);
-                }
-            }
-        }
+        //        Console.WriteLine("Cross Validation Test - {0}", i);
+        //        for (int k = 0; k < data[i].Length; k++)
+        //        {
+        //            nn.ComputeOutputs(data[i][k], target[i][k]);
+        //        }
+        //    }
+        //}
 
-        public double[] Train(double[][] trainData, double[][] targets, int maxEpochs,
+        public double[] Train(double[][] trainDataArray, double[][] targets, int maxEpochs,
           double learnRate, double momentum)
         {
             // train using back-prop
@@ -254,14 +254,20 @@ namespace PUBGStatistics
             //for (int i = 0; i < sequence.Length; ++i)
             //    sequence[i] = i;
 
+            int validationCount = 10;
+            (var data, var target) = CrossValidationSplitData(trainDataArray, targets, validationCount);
+
+
             int errInterval = maxEpochs / 10; // interval to check error
             while (epoch < maxEpochs)
             {
+                var trainData = data.Select((s, k) => new { s, k }).Where(w => w.k != epoch).SelectMany(s => s.s).ToArray();
+                var targetData = target.Select((s, k) => new { s, k }).Where(w => w.k != epoch).SelectMany(s => s.s).ToArray();
                 ++epoch;
 
                 if (epoch % errInterval == 0 && epoch < maxEpochs)
                 {
-                    double trainErr = Error(trainData, targets);
+                    double trainErr = Error(trainData, targetData);
                     Console.WriteLine("epoch = " + epoch + "  error = " +
                       trainErr);
                     //Console.ReadLine();
@@ -280,7 +286,7 @@ namespace PUBGStatistics
                     // 1. compute output node signals (assumes softmax)
                     for (int k = 0; k < numOutput; ++k)
                     {
-                        errorSignal = targets[ii][k] - outputs[k];  // Wikipedia uses (o-t)
+                        errorSignal = targetData[ii][k] - outputs[k];  // Wikipedia uses (o-t)
                         //derivative = (1 - outputs[k]) * outputs[k]; // for softmax
                         derivative = 1; // for ReLU
                         oSignals[k] = errorSignal * derivative;
