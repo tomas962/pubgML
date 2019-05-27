@@ -35,7 +35,7 @@ namespace PUBGStatistics
                 
 
                 List<List<double>> data = ReadDataAsList(dataFile, ';');
-                KNN(data);
+                //KNN(data);
 
                 var pca = PCA.Compute(data, 5);
                 //read data from file
@@ -51,18 +51,19 @@ namespace PUBGStatistics
                 //create network
                 var nn = new BPNeuralNetwork(normalizedPcaData[0].Length, hiddenNeuronCount, outputNeuronCount, min, max);
 
+                nn.CrossValidation(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum, nn);
                 //train network
-                nn.Train(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum);
+                //nn.Train(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum);
 
                 //string[] propertyNames = ReadPropertyNames("../../Data/property_names.csv", ',');
                 //for (int i = 0; i < propertyNames.Length; i++)
                 //    Console.WriteLine(i + " | " + propertyNames[i]);
 
                 //Test the network
-                for (int i = 0; i < testDataArray.Length; i++)
-                {
-                    nn.ComputeOutputs(testDataArray[i], testTargetArray[i]);
-                }
+                //for (int i = 0; i < testDataArray.Length; i++)
+                //{
+                //    nn.ComputeOutputs(testDataArray[i], testTargetArray[i]);
+                //}
                 Console.ReadLine();
             }
             else
@@ -108,7 +109,8 @@ namespace PUBGStatistics
             (double[][] dataArray, double[][] targetArray) = ReadDataAsArray(dataFile, ';', columnsToIgnore, targetColumns, dataStartLine, dataEndLine);
             double[][] normalizedPcaData = List2DToArray2D(pca);
             (double[][] normalizedTargets, double[] min, double[] max) = NormalizeData(targetArray);
-            
+
+            //(var data1, var data2) = CrossValidationSplitData(normalizedPcaData, normalizedTargets, 10);
             (double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(normalizedPcaData, normalizedTargets, dataSplitPercentage);
 
             Application.EnableVisualStyles();

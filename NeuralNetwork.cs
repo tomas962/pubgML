@@ -205,6 +205,24 @@ namespace PUBGStatistics
 
             return result; // now scaled so that xi sum to 1.0
         }
+        public void CrossValidation(double[][] trainDataArray, double[][] targets, int maxEpochs, double learnRate, double momentum, BPNeuralNetwork nn)
+        {
+            int validationCount = 10;
+            (var data, var target) = CrossValidationSplitData(trainDataArray, targets, validationCount);
+            for (int i = 0; i < validationCount; i++)
+            {
+                Console.WriteLine("Cross Validation Train - {0}", i);
+                var trainData = data.Select((s, k) => new { s, k }).Where(w => w.k != i).SelectMany(s => s.s).ToArray();
+                var targetData = target.Select((s, k) => new { s, k }).Where(w => w.k != i).SelectMany(s => s.s).ToArray();
+                Train(trainData, targetData, maxEpochs, learnRate, momentum);
+
+                Console.WriteLine("Cross Validation Test - {0}", i);
+                for (int k = 0; k < data[i].Length; k++)
+                {
+                    nn.ComputeOutputs(data[i][k], target[i][k]);
+                }
+            }
+        }
 
         public double[] Train(double[][] trainData, double[][] targets, int maxEpochs,
           double learnRate, double momentum)
@@ -423,6 +441,24 @@ namespace PUBGStatistics
                 }
             }
             return bigIndex;
+        }
+        static (List<double[][]> dataCrossVal, List<double[][]> targetCrossVal) CrossValidationSplitData(double[][] dataArray, double[][] targetArray, int crossValCount)
+        {
+            List<double[][]> dataCrossVal = new List<double[][]>();
+            List<double[][]> targetCrossVal = new List<double[][]>();
+
+            var dataRows = dataArray.Select(row => row.ToArray());
+            var targetRows = targetArray.Select(row => row.ToArray());
+
+            for (int k = 0; k < crossValCount; k++)
+            {
+                var data = dataRows.Select((s, i) => new { s, i }).Where(w => (w.i >= k * dataArray.Length / crossValCount) && (w.i < (k + 1) * dataArray.Length / crossValCount)).Select(s => s.s).ToArray();
+                dataCrossVal.Add(data);
+                var target = targetRows.Select((s, i) => new { s, i }).Where(w => (w.i >= k * targetArray.Length / crossValCount) && (w.i < (k + 1) * targetArray.Length / crossValCount)).Select(s => s.s).ToArray();
+                targetCrossVal.Add(target);
+            }
+
+            return (dataCrossVal, targetCrossVal);
         }
 
 
