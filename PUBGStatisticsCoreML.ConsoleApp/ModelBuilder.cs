@@ -16,7 +16,7 @@ namespace PUBGStatisticsCoreML.ConsoleApp
 {
     public static class ModelBuilder
     {
-        private static string TRAIN_DATA_FILEPATH = @"C:\Users\Raimonda\Documents\Visual Studio 2017\Projects\PUBGStatisticsCore\PUBGStatisticsCore\Data\statsforMLTrain.csv";
+        private static string TRAIN_DATA_FILEPATH = "../../../../Data/statsforMLTrain.csv";//@"C:\Users\Raimonda\Documents\Visual Studio 2017\Projects\PUBGStatisticsCore\PUBGStatisticsCore\Data\statsforMLTrain.csv";
         private static string MODEL_FILEPATH = @"../../../../PUBGStatisticsCoreML.Model/MLModel.zip";
 
         // Create MLContext to be shared across the model creation workflow objects 
@@ -51,10 +51,11 @@ namespace PUBGStatisticsCoreML.ConsoleApp
             // Data process configuration with pipeline data transformations 
             var dataProcessPipeline = mlContext.Transforms.Categorical.OneHotEncoding(new[] { new InputOutputColumnPair("WinTop10Ratio", "WinTop10Ratio"), new InputOutputColumnPair("RoadKillsPg", "RoadKillsPg"), new InputOutputColumnPair("TeamKillsPg", "TeamKillsPg"), new InputOutputColumnPair("Top10sPg", "Top10sPg"), new InputOutputColumnPair("HeadshotKillRatio", "HeadshotKillRatio") })
                                       .Append(mlContext.Transforms.Categorical.OneHotHashEncoding(new[] { new InputOutputColumnPair("KillDeathRatio", "KillDeathRatio"), new InputOutputColumnPair("WinRatio", "WinRatio"), new InputOutputColumnPair("Top10Ratio", "Top10Ratio"), new InputOutputColumnPair("HeadshotKillsPg", "HeadshotKillsPg"), new InputOutputColumnPair("HealsPg", "HealsPg"), new InputOutputColumnPair("KillsPg", "KillsPg") }))
-                                      .Append(mlContext.Transforms.Concatenate("Features", new[] { "WinTop10Ratio", "RoadKillsPg", "TeamKillsPg", "Top10sPg", "HeadshotKillRatio", "KillDeathRatio", "WinRatio", "Top10Ratio", "HeadshotKillsPg", "HealsPg", "KillsPg", "TrackerID", "RoundsPlayed", "Wins", "Top10s", "Losses", "Assists", "Suicides", "TeamKills", "HeadshotKills", "VehicleDestroys", "RoadKills", "DailyKills", "WeeklyKills", "RoundMostKills", "MaxKillStreaks", "Days", "WinPoints", "Heals", "Boosts" }));
+                                      .Append(mlContext.Transforms.Concatenate("Features", new[] { "WinTop10Ratio", "RoadKillsPg", "TeamKillsPg", "Top10sPg", "HeadshotKillRatio", "KillDeathRatio", "WinRatio", "Top10Ratio", "HeadshotKillsPg", "HealsPg", "KillsPg", "TrackerID", "RoundsPlayed", "Wins", "Top10s", "Losses", "Assists", "Suicides", "TeamKills", "HeadshotKills", "VehicleDestroys", "RoadKills", "DailyKills", "WeeklyKills", "RoundMostKills", "MaxKillStreaks", "Days", "WinPoints", "Heals", "Boosts" })
+                                      .Append(mlContext.Transforms.NormalizeMinMax("Features")));
 
             // Set the training algorithm 
-            var trainer = mlContext.Regression.Trainers.LightGbm(labelColumnName: "Kills", featureColumnName: "Features");
+            var trainer = mlContext.Regression.Trainers.LightGbm(labelColumnName: "Kills", featureColumnName: "Features");//, featureColumnName: "Features"
             var trainingPipeline = dataProcessPipeline.Append(trainer);
 
             return trainingPipeline;
