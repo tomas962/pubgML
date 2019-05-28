@@ -28,7 +28,7 @@ namespace PUBGStatisticsCoreML.ConsoleApp
             MLContext mlContext = new MLContext();
 
             // Training code used by ML.NET CLI and AutoML to generate the model
-            ModelBuilder.CreateModel();
+           // ModelBuilder.CreateModel();
 
             List<double> errors = new List<double>();
 

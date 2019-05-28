@@ -27,9 +27,12 @@ namespace PUBGStatistics
         private double[] min; //target min and max values use for output denormalization
         private double[] max; 
 
+        private double[][] testData; //optional test data array
+        private double[][] testTargets;
+
         private Random rnd;
 
-        public BPNeuralNetwork(int numInput, int numHidden, int numOutput, double[] min, double[] max)
+        public BPNeuralNetwork(int numInput, int numHidden, int numOutput, double[] min, double[] max, double[][] testDataArray = null, double[][] testTargetArray = null)
         {
             this.numInput = numInput;
             this.numHidden = numHidden;
@@ -47,6 +50,18 @@ namespace PUBGStatistics
 
             this.min = min;
             this.max = max;
+
+            if (testDataArray != null && testTargetArray != null)
+            {
+                testData = testDataArray;
+                testTargets = testTargetArray;
+            }
+            else
+            {
+                testData = null;
+                testTargets = null;
+            }
+            
 
             this.rnd = new Random(0);
             this.InitializeWeights(); // all weights and biases
@@ -190,21 +205,7 @@ namespace PUBGStatistics
             else return x;
         }
 
-        private static double[] Softmax(double[] oSums)
-        {
-            // does all output nodes at once so scale
-            // doesn't have to be re-computed each time
-
-            double sum = 0.0;
-            for (int i = 0; i < oSums.Length; ++i)
-                sum += Math.Exp(oSums[i]);
-
-            double[] result = new double[oSums.Length];
-            for (int i = 0; i < oSums.Length; ++i)
-                result[i] = Math.Exp(oSums[i]) / sum;
-
-            return result; // now scaled so that xi sum to 1.0
-        }
+       
         //public void CrossValidationLievas(double[][] trainDataArray, double[][] targets, int maxEpochs, double learnRate, double momentum, BPNeuralNetwork nn)
         //{
         //    int validationCount = 10;
@@ -224,7 +225,7 @@ namespace PUBGStatistics
         //    }
         //}
 
-        public double[] Train(double[][] trainDataArray, double[][] targets, int maxEpochs,
+        public (double[] trainErrors, double[] validationErrors, double[] testErrors) Train(double[][] trainDataArray, double[][] targets, int maxEpochs,
           double learnRate, double momentum)
         {
             // train using back-prop
@@ -258,19 +259,28 @@ namespace PUBGStatistics
             (var data, var target) = CrossValidationSplitData(trainDataArray, targets, validationCount);
 
             List<double> errors = new List<double>();
+            List<double> validationErrors = new List<double>();
+            List<double> testErrors = new List<double>();
             int errInterval = maxEpochs / 10; // interval to check error
             while (epoch < maxEpochs)
             {
-                var trainData = data.Select((s, k) => new { s, k }).Where(w => w.k != epoch).SelectMany(s => s.s).ToArray();
-                var targetData = target.Select((s, k) => new { s, k }).Where(w => w.k != epoch).SelectMany(s => s.s).ToArray();
-                ++epoch;
 
-                if (epoch % errInterval == 0 && epoch < maxEpochs)
+                //current data section index for validation data extraction
+                int currentValDataIdx = epoch % validationCount;
+
+                //Split data for k-means cross validation
+                var trainData = data.Select((s, k) => new { s, k }).Where(w => w.k != currentValDataIdx).SelectMany(s => s.s).ToArray();
+                var targetData = target.Select((s, k) => new { s, k }).Where(w => w.k != currentValDataIdx).SelectMany(s => s.s).ToArray();
+                var validationData = data.Select((s, k) => new { s, k }).Where(w => w.k == currentValDataIdx).SelectMany(s => s.s).ToArray();
+                var validationTargets = target.Select((s, k) => new { s, k }).Where(w => w.k == currentValDataIdx).SelectMany(s => s.s).ToArray();
+
+                //test network before training
+                if (epoch == 0)
                 {
                     double trainErr = Error(trainData, targetData);
-                    Console.WriteLine("epoch = " + epoch + "  error = " +
-                      trainErr);
-                    errors.Add(trainErr);
+                    double validationErr = Error(validationData, validationTargets);
+                    double testErr = Error(testData, testTargets);
+                    Console.WriteLine(string.Format("Testing on data before training the network \n    Training data error   = {0:0.00000000}\n    Validation data error = {1:0.00000000}\n    Test data error       = {2:0.00000000}", trainErr, validationErr, testErr));
                     //Console.ReadLine();
                 }
 
@@ -369,11 +379,24 @@ namespace PUBGStatistics
                     }
 
                 } // each training item
+                
+                //if (epoch % errInterval == 0 && epoch < maxEpochs)
+                {
+                    double trainErr = Error(trainData, targetData);
+                    double validationErr = Error(validationData, validationTargets);
+                    double testErr = Error(testData, testTargets);
+                    errors.Add(trainErr);
+                    validationErrors.Add(validationErr);
+                    testErrors.Add(testErr);
+                    Console.WriteLine(string.Format("Epoch = {0,3} \n    Training data error   = {1:0.00000000}\n    Validation data error = {2:0.00000000}\n    Test data error       = {3:0.00000000}", epoch, trainErr, validationErr, testErr));
+                    //Console.ReadLine();
+                }
+                epoch++;
 
             } // while
             Console.WriteLine("Average error: {0}", errors.Average());
-            double[] bestWts = GetWeights();
-            return bestWts;
+            
+            return (errors.ToArray(), validationErrors.ToArray(), testErrors.ToArray());
         } // Train
 
         private void Shuffle(int[] sequence) // instance method
@@ -469,6 +492,6 @@ namespace PUBGStatistics
             return (dataCrossVal, targetCrossVal);
         }
 
-
+        
     } // NeuralNetwork
 }
