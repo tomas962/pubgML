@@ -14,7 +14,73 @@ using LiveCharts.Wpf;
 namespace PUBGStatistics
 {
     public partial class Diagrams : Form
-    { 
+    {
+        public Diagrams(ChartValues<ObservablePoint> points1, ChartValues<ObservablePoint> points2, ChartValues<ObservablePoint> points3, ChartValues<ObservablePoint> points1Wrong, ChartValues<ObservablePoint> points2Wrong, ChartValues<ObservablePoint> points3Wrong)
+        {
+            var converter = new System.Windows.Media.BrushConverter();
+            InitializeComponent();
+            cartesianChart1.Series = new SeriesCollection
+            {
+                new ScatterSeries
+                {
+                    Title = "< 50 Kills Correct",
+                    //Fill = (System.Windows.Media.Brush)converter.ConvertFromString("#FFFFFF90"),
+                    Fill = (System.Windows.Media.Brush)converter.ConvertFromString("#FF0000"),
+                    Values = points1,
+                    PointGeometry = DefaultGeometries.Circle,
+                    //PointGeometry = DefaultGeometries.Triangle,
+                    MinPointShapeDiameter = 5,
+                    MaxPointShapeDiameter = 10
+                },
+                new ScatterSeries
+                {
+                    Title = "< 50 Kills Wrong",
+                    Fill = (System.Windows.Media.Brush)converter.ConvertFromString("#551111"),
+                    Values = points1Wrong,
+                    PointGeometry = DefaultGeometries.Circle,
+                    MinPointShapeDiameter = 5,
+                    MaxPointShapeDiameter = 10
+                },
+                new ScatterSeries
+                {
+                    Title = "> 50 && < 150 Kills Correct",
+                    Fill = (System.Windows.Media.Brush)converter.ConvertFromString("#00FF08"),
+                    Values = points2,
+                    PointGeometry = DefaultGeometries.Square,
+                    MinPointShapeDiameter = 5,
+                    MaxPointShapeDiameter = 10
+                },
+                new ScatterSeries
+                {
+                    Title = "> 50 && < 150 Kills Wrong",
+                    Values = points2Wrong,
+                    Fill = (System.Windows.Media.Brush)converter.ConvertFromString("#083D0A"),
+                    PointGeometry = DefaultGeometries.Square,
+                    MinPointShapeDiameter = 5,
+                    MaxPointShapeDiameter = 10
+                },
+                new ScatterSeries
+                {
+                    Title = "> 150 Kills Correct",
+                    Fill = (System.Windows.Media.Brush)converter.ConvertFromString("#D4FF00"),
+                    Values = points3,
+                    PointGeometry = DefaultGeometries.Triangle,
+                    MinPointShapeDiameter = 5,
+                    MaxPointShapeDiameter = 10
+                },
+                new ScatterSeries
+                {
+                    Title = "> 150 Kills Wrong" ,
+                    Values = points3Wrong,
+                    Fill = (System.Windows.Media.Brush)converter.ConvertFromString("#4D5814"),
+                    PointGeometry = DefaultGeometries.Triangle,
+                    MinPointShapeDiameter = 5,
+                    MaxPointShapeDiameter = 10
+                }
+            };
+            label1.Text = "K-Nearest neighbor metodo suprognozuoti testavimo duomenys";
+
+        }
         public Diagrams(double[][] data, double[][] targets, double min, double max)
         {
             InitializeComponent();
@@ -77,14 +143,6 @@ namespace PUBGStatistics
                     Y = data3[i][1]
                 });
             }
-            //foreach (var item in data)
-            //{
-            //    points.Add(new ObservablePoint
-            //    {
-            //        X = item[0],
-            //        Y = item[1]
-            //    });
-            //}
 
         }
         double[][] Get1stClass(double[][] data, double[][] targets, double min, double max)//(50 - min) / (max - min);

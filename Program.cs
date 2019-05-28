@@ -1,3 +1,5 @@
+using LiveCharts;
+using LiveCharts.Defaults;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -48,6 +50,8 @@ namespace PUBGStatistics
                 //split data into two sets - training and testing = 80% and 20%
                 (double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(normalizedPcaData, normalizedTargets, dataSplitPercentage);
 
+                //var nn2 = new NeuralNetwork2();
+                //nn2.Run(trainDataArray, trainTargetArray, testDataArray, testTargetArray);
                 //create network
                 var nn = new BPNeuralNetwork(normalizedPcaData[0].Length, hiddenNeuronCount, outputNeuronCount, min, max);
                 //var nn = new BPNeuralNetwork(normalizedPcaData[0].Length, hiddenNeuronCount, outputNeuronCount, min, max);
@@ -117,6 +121,12 @@ namespace PUBGStatistics
             //Application.EnableVisualStyles();
             //Application.Run(new Diagrams(trainDataArray, trainTargetArray, min[0], max[0]));
 
+            ChartValues<ObservablePoint> points1 = new ChartValues<ObservablePoint>();
+            ChartValues<ObservablePoint> points2 = new ChartValues<ObservablePoint>();
+            ChartValues<ObservablePoint> points3 = new ChartValues<ObservablePoint>();
+            ChartValues<ObservablePoint> points1Wrong = new ChartValues<ObservablePoint>();
+            ChartValues<ObservablePoint> points2Wrong = new ChartValues<ObservablePoint>();
+            ChartValues<ObservablePoint> points3Wrong = new ChartValues<ObservablePoint>();
             int K = 131;
             int N = 50;
             int correct = 0;
@@ -132,10 +142,20 @@ namespace PUBGStatistics
                     if (actual < 50)
                     {
                         correct++;
+                        points1.Add(new ObservablePoint
+                        {
+                            X = testDataArray[i][0],
+                            Y = testDataArray[i][1]
+                        });
                     }
                     else
                     {
                         wrong++;
+                        points1Wrong.Add(new ObservablePoint
+                        {
+                            X = testDataArray[i][0],
+                            Y = testDataArray[i][1]
+                        });
                     }
                 }
                 else if(classIdx == 2)
@@ -143,10 +163,20 @@ namespace PUBGStatistics
                     if (actual > 150)
                     {
                         correct++;
+                        points2.Add(new ObservablePoint
+                        {
+                            X = testDataArray[i][0],
+                            Y = testDataArray[i][1]
+                        });
                     }
                     else
                     {
                         wrong++;
+                        points2Wrong.Add(new ObservablePoint
+                        {
+                            X = testDataArray[i][0],
+                            Y = testDataArray[i][1]
+                        });
                     }
                 }
                 else
@@ -154,14 +184,27 @@ namespace PUBGStatistics
                     if (actual > 50 && actual < 150)
                     {
                         correct++;
+                        points3.Add(new ObservablePoint
+                        {
+                            X = testDataArray[i][0],
+                            Y = testDataArray[i][1]
+                        });
                     }
                     else
                     {
                         wrong++;
+                        points3Wrong.Add(new ObservablePoint
+                        {
+                            X = testDataArray[i][0],
+                            Y = testDataArray[i][1]
+                        });
                     }
                 }
             }
             Console.WriteLine("Accuracy: {0} %", (double)correct / N * 100 );
+            Application.EnableVisualStyles();
+            Application.Run(new Diagrams(points1, points2, points3, points1Wrong, points2Wrong, points3Wrong));
+
             Console.WriteLine("-------------------------------------\n");
         }
 
