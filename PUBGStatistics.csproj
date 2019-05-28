@@ -79,7 +79,6 @@
     </Compile>
     <Compile Include="KNearestNeighbour.cs" />
     <Compile Include="NeuralNetwork.cs" />
-    <Compile Include="NeuralNetwork2.cs" />
     <Compile Include="PCA.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

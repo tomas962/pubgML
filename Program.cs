@@ -19,12 +19,13 @@ namespace PUBGStatistics
         const double learningRate = 0.1;
         const double learningMomentum = 1;
         const int dataStartLine = 0; //line from which to start reading data from file
-        const int dataEndLine = int.MaxValue; //10000; //line from which to stop reading from file
+        const int dataEndLine = 10000; //line from which to stop reading from file
         readonly static int[] columnsToIgnore = new int[] { 0, 1, 2, 16 }; //columns to exclude from network (such as kills per game, when training for kills)
         readonly static int[] targetColumns = new int[] { /*6*/ 22 }; //columns to use as targets. 6=Wins; 22=Kills
         const bool usePca = true;
         //const string dataFile = "../../Data/statsnocommas.csv";
         const string dataFile = "../../Data/stats.csv";
+
 
 
         [STAThread]
@@ -67,11 +68,10 @@ namespace PUBGStatistics
                 //    Console.WriteLine(i + " | " + propertyNames[i]);
 
                 //Test the network
-                //for (int i = 0; i < testDataArray.Length; i++)
-                //{
-                //    nn.ComputeOutputs(testDataArray[i], testTargetArray[i]);
-                //}
-                Console.ReadLine();
+                for (int i = 0; i < testDataArray.Length; i++)
+                {
+                    nn.ComputeOutputs(testDataArray[i], testTargetArray[i]);
+                }
             }
             else
             {
@@ -86,11 +86,12 @@ namespace PUBGStatistics
                 //(double[][] trainDataArray, double[][] trainTargetArray, double[][] testDataArray, double[][] testTargetArray) = SplitData(dataArray, targetArray, 0.8);
 
                 //create network
-                var nn = new BPNeuralNetwork(dataArray[0].Length, hiddenNeuronCount, outputNeuronCount, min, max);
+                var nn = new BPNeuralNetwork(dataArray[0].Length, hiddenNeuronCount, outputNeuronCount, min, max, testDataArray, testTargetArray);
 
                 //train network
-                nn.Train(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum);
+                (double[] trainErrors, double[] validationErrors, double[] testErrors) = nn.Train(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum);
 
+                PlotValidationChart(trainErrors, validationErrors, testErrors);
                 //string[] propertyNames = ReadPropertyNames("../../Data/property_names.csv", ',');
                 //for (int i = 0; i < propertyNames.Length; i++)
                 //    Console.WriteLine(i + " | " + propertyNames[i]);
@@ -100,9 +101,9 @@ namespace PUBGStatistics
                 {
                     nn.ComputeOutputs(testDataArray[i], testTargetArray[i]);
                 }
-                Console.ReadLine();
             }
-
+            Console.WriteLine();
+            Console.ReadLine();
         }
         [STAThread]
         static void KNN(List<List<double>> data)

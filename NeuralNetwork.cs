@@ -255,7 +255,7 @@ namespace PUBGStatistics
             //for (int i = 0; i < sequence.Length; ++i)
             //    sequence[i] = i;
 
-            int validationCount = 10;
+            int validationCount = 100;
             (var data, var target) = CrossValidationSplitData(trainDataArray, targets, validationCount);
 
             List<double> errors = new List<double>();
