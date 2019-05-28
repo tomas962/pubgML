@@ -19,7 +19,7 @@ namespace PUBGStatistics
         const double learningRate = 0.1;
         const double learningMomentum = 1;
         const int dataStartLine = 0; //line from which to start reading data from file
-        const int dataEndLine = 10000; //line from which to stop reading from file
+        const int dataEndLine = int.MaxValue; //10000; //line from which to stop reading from file
         readonly static int[] columnsToIgnore = new int[] { 0, 1, 2, 16 }; //columns to exclude from network (such as kills per game, when training for kills)
         readonly static int[] targetColumns = new int[] { /*6*/ 22 }; //columns to use as targets. 6=Wins; 22=Kills
         const bool usePca = true;
@@ -129,7 +129,7 @@ namespace PUBGStatistics
             ChartValues<ObservablePoint> points2Wrong = new ChartValues<ObservablePoint>();
             ChartValues<ObservablePoint> points3Wrong = new ChartValues<ObservablePoint>();
             int K = 131;
-            int N = 50;
+            int N = 200;
             int correct = 0;
             int wrong = 0;
             for (int i = 0; i < N; i++)//testDataArray.Length
