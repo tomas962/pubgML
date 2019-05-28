@@ -52,10 +52,11 @@ namespace PUBGStatistics
                 //create network
                 var nn = new BPNeuralNetwork(normalizedPcaData[0].Length, hiddenNeuronCount, outputNeuronCount, min, max, testDataArray, testTargetArray);
                 //var nn = new BPNeuralNetwork(normalizedPcaData[0].Length, hiddenNeuronCount, outputNeuronCount, min, max);
-
                 //nn.CrossValidation(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum, nn);
                 //train network
                 (double[] trainErrors, double[] validationErrors, double[] testErrors) = nn.Train(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum);
+
+                PlotValidationChart(trainErrors, validationErrors, testErrors);
 
                 //string[] propertyNames = ReadPropertyNames("../../Data/property_names.csv", ',');
                 //for (int i = 0; i < propertyNames.Length; i++)
@@ -166,7 +167,12 @@ namespace PUBGStatistics
             Console.WriteLine("-------------------------------------\n");
         }
 
-
+        static void PlotValidationChart(double[] trainErr, double[] validationErr, double[] testErr)
+        {
+            Application.EnableVisualStyles();
+            Application.Run(new Diagrams(trainErr, validationErr, testErr));
+            
+        }
         static T[][] List2DToArray2D<T>(List<List<T>> list)
         {
             var lists = list.Select(sublist => sublist.ToArray());

@@ -87,6 +87,51 @@ namespace PUBGStatistics
             //}
 
         }
+
+        /// <summary>
+        /// Chart for validation errors
+        /// </summary>
+        public Diagrams(double[] trainErr, double[] validationErr, double[] testErr)
+        {
+            InitializeComponent();
+
+            cartesianChart1.Series = new SeriesCollection
+            {
+                new LineSeries
+                {
+                    Title = "Training",
+                    Values = new ChartValues<double>(trainErr),
+                    PointGeometry = null
+                },
+                new LineSeries
+                {
+                    Title = "Validation",
+                    Values = new ChartValues<double> (validationErr),
+                    PointGeometry = null
+                },
+                new LineSeries
+                {
+                    Title = "Testing",
+                    Values = new ChartValues<double> (testErr),
+                    PointGeometry = null
+                }
+            };
+
+            cartesianChart1.AxisX.Add(new Axis
+            {
+                Title = "Epoch"           
+            });
+
+            cartesianChart1.AxisY.Add(new Axis
+            {
+                Title = "Mean Squared Error",
+            });
+
+            cartesianChart1.LegendLocation = LegendLocation.Right;
+
+            label1.Text = "Kryžminės validacijos rezultatai, naudojant 10 dalių (10 means cross validation)";
+
+        }
         double[][] Get1stClass(double[][] data, double[][] targets, double min, double max)//(50 - min) / (max - min);
         {
             return data.Select((s, i) => new { s, i }).Where(w => targets[w.i][0] < ((50 - min) / (max - min)) ).Select(s => s.s).ToArray();
@@ -98,6 +143,11 @@ namespace PUBGStatistics
         double[][] Get3rdClass(double[][] data, double[][] targets, double min, double max)
         {
             return data.Select((s, i) => new { s, i }).Where(w => targets[w.i][0] > ((150 - min) / (max - min))).Select(s => s.s).ToArray();
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

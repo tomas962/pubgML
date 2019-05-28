@@ -36,7 +36,7 @@
             // 
             this.cartesianChart1.Location = new System.Drawing.Point(45, 43);
             this.cartesianChart1.Name = "cartesianChart1";
-            this.cartesianChart1.Size = new System.Drawing.Size(676, 379);
+            this.cartesianChart1.Size = new System.Drawing.Size(1250, 600);
             this.cartesianChart1.TabIndex = 1;
             this.cartesianChart1.Text = "cartesianChart1";
             // 
@@ -49,12 +49,13 @@
             this.label1.Size = new System.Drawing.Size(605, 31);
             this.label1.TabIndex = 2;
             this.label1.Text = "Duomenų išsidėstymas PCA komponenčių ašyse";
+            this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
             // Diagrams
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(1284, 661);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.cartesianChart1);
             this.Name = "Diagrams";
