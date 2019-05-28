@@ -19,8 +19,8 @@ namespace PUBGStatistics
         const double learningRate = 0.1;
         const double learningMomentum = 1;
         const int dataStartLine = 0; //line from which to start reading data from file
-        const int dataEndLine = int.MaxValue; //line from which to stop reading from file
-        readonly static int[] columnsToIgnore = new int[] { 0, 1, 38, 2, 16 }; //columns to exclude from network (such as kills per game, when training for kills)
+        const int dataEndLine = 10000; //line from which to stop reading from file
+        readonly static int[] columnsToIgnore = new int[] { 0, 1, 2, 16 }; //columns to exclude from network (such as kills per game, when training for kills)
         readonly static int[] targetColumns = new int[] { /*6*/ 22 }; //columns to use as targets. 6=Wins; 22=Kills
         const bool usePca = true;
         //const string dataFile = "../../Data/statsnocommas.csv";
@@ -36,7 +36,8 @@ namespace PUBGStatistics
                 //Application.Run(new Diagrams());
                 
 
-                List<List<double>> data = ReadDataAsList(dataFile, ';');
+                (List<List<double>> data, _) = ReadDataAsList(dataFile, ';', columnsToIgnore, targetColumns, dataStartLine, dataEndLine);
+
                 KNN(data);
 
                 var pca = PCA.Compute(data, 5);
@@ -53,22 +54,22 @@ namespace PUBGStatistics
                 //var nn2 = new NeuralNetwork2();
                 //nn2.Run(trainDataArray, trainTargetArray, testDataArray, testTargetArray);
                 //create network
-                var nn = new BPNeuralNetwork(normalizedPcaData[0].Length, hiddenNeuronCount, outputNeuronCount, min, max);
+                var nn = new BPNeuralNetwork(normalizedPcaData[0].Length, hiddenNeuronCount, outputNeuronCount, min, max, testDataArray, testTargetArray);
                 //var nn = new BPNeuralNetwork(normalizedPcaData[0].Length, hiddenNeuronCount, outputNeuronCount, min, max);
 
                 //nn.CrossValidation(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum, nn);
                 //train network
-                nn.Train(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum);
+                (double[] trainErrors, double[] validationErrors, double[] testErrors) = nn.Train(trainDataArray, trainTargetArray, trainingEpochCount, learningRate, learningMomentum);
 
                 //string[] propertyNames = ReadPropertyNames("../../Data/property_names.csv", ',');
                 //for (int i = 0; i < propertyNames.Length; i++)
                 //    Console.WriteLine(i + " | " + propertyNames[i]);
 
                 //Test the network
-                for (int i = 0; i < testDataArray.Length; i++)
-                {
-                    nn.ComputeOutputs(testDataArray[i], testTargetArray[i]);
-                }
+                //for (int i = 0; i < testDataArray.Length; i++)
+                //{
+                //    nn.ComputeOutputs(testDataArray[i], testTargetArray[i]);
+                //}
                 Console.ReadLine();
             }
             else
@@ -208,6 +209,7 @@ namespace PUBGStatistics
             Console.WriteLine("-------------------------------------\n");
         }
 
+
         static T[][] List2DToArray2D<T>(List<List<T>> list)
         {
             var lists = list.Select(sublist => sublist.ToArray());
@@ -247,33 +249,8 @@ namespace PUBGStatistics
             return stats;
         }
 
-        static List<List<double>> ReadDataAsList(string fileName, char separator)
+        static (List<List<double>> data, List<List<double>> targets) ReadDataAsList(string fileName, char separator, int[] columnsToSkip = null, int[] targetColumns = null, int startLine = 0, int endLine = int.MaxValue, double split = 1)
         {
-            List<List<double>> data = new List<List<double>>();
-            using (StreamReader reader = new StreamReader(fileName))
-            {
-                string line;
-                string[] values;
-                int lineNr = 0;
-
-                while ((line = reader.ReadLine()) != null)
-                {
-                    data.Add(new List<double>());
-
-                    values = line.Split(separator);
-                    //Skip first value, because it is string (player name)
-                    for (int i = 1; i < values.Length; i++)
-                    {
-                        data[lineNr].Add(double.Parse(values[i]));
-                    }
-                    lineNr++;
-                }
-            }
-            return data;
-        }
-        static (double[][] dataArray, double[][] targetArray) ReadDataAsArray(string fileName, char separator, int[] columnsToSkip, int[] targetColumns, int startLine = 0, int endLine = int.MaxValue, double split = 1)
-        {
-
             List<List<double>> data = new List<List<double>>();
             List<List<double>> targets = new List<List<double>>();
             using (StreamReader reader = new StreamReader(fileName))
@@ -304,11 +281,60 @@ namespace PUBGStatistics
                     for (int i = 0; i < values.Length; i++)
                     {
                         //check if column should be skipped
-                        if (columnsToSkip.Contains(i))
+                        if (columnsToSkip != null && columnsToSkip.Contains(i))
                             continue;
 
                         //check if column is target column = add to target array
-                        if (targetColumns.Contains(i))
+                        if (targetColumns != null && targetColumns.Contains(i))
+                            targets[idx].Add(double.Parse(values[i]));
+
+                        //if not target, add to data array
+                        else
+                            data[idx].Add(double.Parse(values[i]));
+                    }
+                    idx++;
+                    lineNr++;
+                }
+            }
+            return (data, targets);
+        }
+        static (double[][] dataArray, double[][] targetArray) ReadDataAsArray(string fileName, char separator, int[] columnsToSkip = null, int[] targetColumns = null, int startLine = 0, int endLine = int.MaxValue, double split = 1)
+        {
+            List<List<double>> data = new List<List<double>>();
+            List<List<double>> targets = new List<List<double>>();
+            using (StreamReader reader = new StreamReader(fileName))
+            {
+                string line;
+                string[] values;
+                int lineNr = 0;
+                int idx = 0;
+
+                while ((line = reader.ReadLine()) != null)
+                {
+                    //start reading from startLine
+                    if (lineNr < startLine)
+                    {
+                        lineNr++;
+                        continue;
+                    }
+
+                    //end reading on endLine
+                    if (lineNr > endLine)
+                        break;
+
+                    data.Add(new List<double>());
+                    targets.Add(new List<double>());
+
+                    values = line.Split(separator);
+
+                    for (int i = 0; i < values.Length; i++)
+                    {
+                        //check if column should be skipped
+                        if (columnsToSkip!=null && columnsToSkip.Contains(i))
+                            continue;
+
+                        //check if column is target column = add to target array
+                        if (targetColumns!=null && targetColumns.Contains(i))
                             targets[idx].Add(double.Parse(values[i]));
 
                         //if not target, add to data array
